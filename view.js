@@ -1,4 +1,3 @@
-
 var questions = [
     {
         type: "list",
@@ -23,13 +22,13 @@ var questions = [
         type: "input",
         message: "Enter employee's first name.",
         when: (ans) => ans.action == 'Add' && ans.table == "employee",
-        name: "employeeFn"
+        name: "employeeFirstName"
     },
     {
         type: "input",
         message: "Enter employee's last name.",
         when: (ans) => ans.action == 'Add' && ans.table == "employee",
-        name: "employeeLn"
+        name: "employeeLastName"
     },
     {
         type: "input",
@@ -42,7 +41,10 @@ var questions = [
         message: "Enter employee's manager id",
         when: (ans) => ans.action == "Add" && ans.table == "employee",
         name: "managerId"
-    },
+    }
+]
+
+var confirm = [
     {
         type: "confirm",
         message: "Are you done querying employee_db?",
@@ -50,5 +52,8 @@ var questions = [
     }
 ]
 
-exports.list = questions;
+module.exports = {
+    questions,
+    confirm
+}
 

@@ -21,57 +21,75 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
 
-    /*connection.query('SELECT * FROM ??', ['employee'], function (err, results, fields) {
-        if (err) throw err;
-        console.table(results);
-    });*/
-
-    userPrompt();
+    main();
 });
 
-async function userPrompt() {
+async function main() {
 
-    let done = false;
+    var done = false;
 
     while (!done) {
 
         let ans = await inquirer.prompt(view.questions);
 
-        switch (ans.action) {
-            case "View":
-                viewTable(ans);
-                break;
+        await sqlOperation(ans);
 
-            case "Add":
-
-                break;
-
-            case "Update":
-
-            default:
-        }
-
-        let confirm = await inquirer.prompt(view.confirm);
-        done = confirm.done;
+        await inquirer.prompt(view.confirm).then((ans) => done = !ans.confirm);
     }
 
     connection.end();
 }
 
-function insertInto(ans) {
+function sqlOperation(ans){
 
+    const sqlStatement = (action) =>{
 
-};
-function viewTable(ans) {
+        switch (action) {
+            case "View all employees":
+                viewTable("employee");
+                break;
+    
+            case "View all roles":
+                viewTable("role")
+                break;
+    
+            case "View all departments":
+                viewTable("department");
+                break;
+            case "Add employee":
+                insertInto("employee", ans);
+                break;
 
-    //var sql = 'SELECT * FROM ' + connection.escape(ans.table);
-    connection.query('SELECT * FROM ?? ', [ans.table], function (err, results, fields) {
-        if (err) throw err;
+            default:
+                return "Error";
+        }
+
+        return "Success!";
+    }
+
+    return Promise.resolve(sqlStatement(ans.action));
+}
+
+function viewTable(table) {
+
+    connection.query('SELECT * FROM ?? ', [table], function (err, results, fields) {
+        if(err) throw err;
+        console.log('\n');
         console.table(results);
         console.log('\n');
     });
 };
 
+function insertInto(table, ans) {
 
+    let columns = table === 'employee' ? '(first_name, last_name, role_id)':
+                  table === 'role' ? '(name, salary)' : '(title, salary, department_id)';
+    
+    console.log(columns);
+    //connection.query('')
+}
 
-function updateTable(ans) { };
+function getRoles() {
+    //connection.query('')
+}
+

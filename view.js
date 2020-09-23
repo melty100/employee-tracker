@@ -1,4 +1,4 @@
-var questions = [
+var actionQuestion = [
     {
         type: "list",
         message: "What would you like to do?",
@@ -7,7 +7,34 @@ var questions = [
                   "View all roles", "Add role", "Update role"],
 
         name: "action"
+    }
+];
+
+var getAddEmployeeQuestions = (roleChoices) => {
+    return [{
+        type: "input",
+        message: "Enter employee's first name.",
+        name: "firstName"
     },
+    {
+        type: "input",
+        message: "Enter employee's last name.",
+        name: "lastName"
+    },
+    {
+        type: "list",
+        message: "Enter employee's role",
+        choices: roleChoices,
+        name: "roleName"
+    },
+    {
+        type: "input",
+        message: "Enter employee's manager id",
+        name: "managerId"
+    }];
+};
+
+/*
     //Qusetions for departments
     {
         type: "input",
@@ -20,19 +47,19 @@ var questions = [
         type: "input",
         message: "Enter employee's first name.",
         when: (ans) => ans.action == 'Add employee',
-        name: "employeeFirstName"
+        name: "firstName"
     },
     {
         type: "input",
         message: "Enter employee's last name.",
         when: (ans) => ans.action == 'Add employee',
-        name: "employeeLastName"
+        name: "lastName"
     },
     {
         type: "input",
-        message: "Enter employee's role id",
+        message: "Enter employee's role",
         when: (ans) => ans.action == 'Add employee',
-        name: "employeeRoleId"
+        name: "employeeRole"
     },
     {
         type: "input",
@@ -41,7 +68,7 @@ var questions = [
         name: "managerId"
     }
 ]
-
+*/
 var confirm = [
     {
         type: "list",
@@ -52,7 +79,8 @@ var confirm = [
 ]
 
 module.exports = {
-    questions,
-    confirm
+    actionQuestion,
+    confirm,
+    getAddEmployeeQuestions
 }
 

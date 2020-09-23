@@ -26,70 +26,81 @@ connection.connect(function (err) {
 
 async function main() {
 
-    var done = false;
 
-    while (!done) {
-
-        let ans = await inquirer.prompt(view.questions);
-
-        await sqlOperation(ans);
-
-        await inquirer.prompt(view.confirm).then((ans) => done = !ans.confirm);
-    }
-
-    connection.end();
-}
-
-function sqlOperation(ans){
-
-    const sqlStatement = (action) =>{
-
-        switch (action) {
-            case "View all employees":
-                viewTable("employee");
-                break;
+        await inquirer
+        .prompt(view.actionQuestion)
+        .then((ans) => {
+            switch (ans.action) {
+                case "View all employees":
+                    viewTable("employee");
+                    break;
     
-            case "View all roles":
-                viewTable("role")
-                break;
+                case "View all roles":
+                    viewTable("role")
+                    break;
     
-            case "View all departments":
-                viewTable("department");
-                break;
-            case "Add employee":
-                insertInto("employee", ans);
-                break;
+                case "View all departments":
+                    viewTable("department");
+                    break;
+                case "Add employee":
+                    addEmployee();
+                    break;
+    
+                default:
+                    return "Error";
+            }
+        });
 
-            default:
-                return "Error";
-        }
+        //let res = await sqlOperation(ans);  
 
-        return "Success!";
-    }
-
-    return Promise.resolve(sqlStatement(ans.action));
+       // await inquirer.prompt(view.confirm).then((ans) => done = !ans.confirm);
 }
 
 function viewTable(table) {
 
     connection.query('SELECT * FROM ?? ', [table], function (err, results, fields) {
-        if(err) throw err;
+        if (err) throw err;
         console.log('\n');
         console.table(results);
         console.log('\n');
     });
 };
 
-function insertInto(table, ans) {
+function addEmployee() {
 
-    let columns = table === 'employee' ? '(first_name, last_name, role_id)':
-                  table === 'role' ? '(name, salary)' : '(title, salary, department_id)';
+    let columns = '(first_name, last_name, role_id)';
+
+    console.log("check");
     
-    console.log(columns);
-    //connection.query('')
-}
+    var sql = "SELECT * FROM role";
 
-function getRoles() {
+    connection.query(sql, async function (err, results, fields) {
+        if (err) throw err;
+
+        console.table(results);
+
+        let choices = Object.keys(results).map((key) => {
+            let row = results[key];
+            return {title: row.title, id: row.id};
+        });
+
+        let questions = view.getAddEmployeeQuestions(choices.map((row) => row.title));
+        let ans = await inquirer.prompt(questions);
+        let row = choices.find((row) => {return row.title === ans.roleName});
+        //let {firstName, lastName, ...ans} = ans;
+        console.log(row);
+
+        let sql = `INSERT INTO employee ${columns} VALUES ('${ans.firstName}', '${ans.lastName}', ${connection.escape(row.id)})`;
+
+        console.log(sql);
+
+        connection.query(sql, function (err, results, fields) {
+            if (err) throw err;
+            console.log('\n');
+            console.log(results);
+            console.log('\n');
+        });
+    });
     //connection.query('')
 }
 

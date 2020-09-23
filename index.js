@@ -34,18 +34,18 @@ async function main() {
                 case "View all employees":
                     viewTable("employee");
                     break;
-    
                 case "View all roles":
                     viewTable("role")
                     break;
-    
                 case "View all departments":
                     viewTable("department");
                     break;
                 case "Add employee":
                     addEmployee();
                     break;
-    
+                case "Add role":
+                    addRole();
+                    break;
                 default:
                     return "Error";
             }
@@ -66,12 +66,41 @@ function viewTable(table) {
     });
 };
 
+function addRole() {
+    var sql = "SELECT * FROM department";
+
+    connection.query(sql, async function(err, results, fields) {
+
+        if (err) throw err;
+
+        console.table(results);
+
+        //Gets row data from department table for inqurier question object
+        let choices = Object.keys(results).map((key) => {
+            let row = results[key];
+            return row;
+        });
+
+        let questions = view.getAddRoleQuestions(choices.map((row) => row.name));
+
+        let ans = await inquirer.prompt(questions);
+
+        let columns = view.getTableColumns('role');
+        let row = choices.find((row) => {return row.name === ans.department});
+
+        let sql = `INSERT INTO role ${columns} VALUES ('${ans.title}', '${ans.salary}', ${connection.escape(row.id)})`;
+
+        connection.query(sql, function (err, results, fields) {
+            if (err) throw err;
+            console.log('\n');
+            console.log(results);
+            console.log('\n');
+        });
+    })
+}
+
 function addEmployee() {
 
-    let columns = '(first_name, last_name, role_id)';
-
-    console.log("check");
-    
     var sql = "SELECT * FROM role";
 
     connection.query(sql, async function (err, results, fields) {
@@ -79,16 +108,22 @@ function addEmployee() {
 
         console.table(results);
 
+        //Gets row data for inqurier question object
         let choices = Object.keys(results).map((key) => {
             let row = results[key];
             return {title: row.title, id: row.id};
         });
 
+        //Sets the choices for possible roles for employee questions 
         let questions = view.getAddEmployeeQuestions(choices.map((row) => row.title));
+
+        //Asks user for new employee information
         let ans = await inquirer.prompt(questions);
+
+        //Sets up data for string literals
+        let columns = view.getTableColumns('employee');
         let row = choices.find((row) => {return row.title === ans.roleName});
         //let {firstName, lastName, ...ans} = ans;
-        console.log(row);
 
         let sql = `INSERT INTO employee ${columns} VALUES ('${ans.firstName}', '${ans.lastName}', ${connection.escape(row.id)})`;
 

@@ -3,15 +3,16 @@ var actionQuestion = [
         type: "list",
         message: "What would you like to do?",
         choices: ["View all employees", "Add employee", "Update employee", "Remove employee",
-                  "View all departments", "Add department", "Update department",
-                  "View all roles", "Add role", "Update role"],
+            "View all departments", "Add department", "Update department",
+            "View all roles", "Add role", "Update role"],
 
         name: "action"
     }
 ];
 
 var getAddEmployeeQuestions = (roleChoices) => {
-    return [{
+    return [
+    {
         type: "input",
         message: "Enter employee's first name.",
         name: "firstName"
@@ -33,6 +34,45 @@ var getAddEmployeeQuestions = (roleChoices) => {
         name: "managerId"
     }];
 };
+
+var getAddRoleQuestions = (departmentChoices) => {
+    return [
+    {
+        type: "input",
+        message: "Enter new role name",
+        name: "title"
+    },
+    {
+        type: "input",
+        message: "Enter salary",
+        name: "salary"
+    },
+    {
+        type: "list",
+        message: "Choose the department for new role",
+        choices: departmentChoices,
+        name: "department"
+    }];
+};
+
+var getTableColumns = (table) => {
+
+    switch (table) {
+        case 'employee':
+            return '(first_name, last_name, role_id)';
+            break;
+        case 'role':
+            return '(title, salary, department_id)'
+            break;
+        case 'department':
+            return '(name)';
+            break;
+        default:
+            break;
+    }
+
+    return '';
+}
 
 /*
     //Qusetions for departments
@@ -81,6 +121,8 @@ var confirm = [
 module.exports = {
     actionQuestion,
     confirm,
-    getAddEmployeeQuestions
+    getAddEmployeeQuestions,
+    getAddRoleQuestions,
+    getTableColumns
 }
 

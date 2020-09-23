@@ -10,6 +10,7 @@ var actionQuestion = [
     }
 ];
 
+// These functions return paramaterized questions for inquirer
 var getAddEmployeeQuestions = (roleChoices) => {
     return [
     {
@@ -54,6 +55,63 @@ var getAddRoleQuestions = (departmentChoices) => {
         name: "department"
     }];
 };
+
+var getAddDepartmentQuestions = () => {
+    return [
+        {
+            type: "input",
+            message: "Enter new department name",
+            name: "name"
+        }
+    ];
+}
+
+var getUpdateEmployeeQuestions = (employeeChoices) => {
+    return [
+        {
+            type: "list",
+            message: "Choose which employee record to update",
+            choices: employeeChoices,
+            name: "employee"
+        },
+        {
+            type: "checkbox",
+            message: "Select which column data you would like to update",
+            choices: [
+                {name: "First Name", checked: false},
+                {name: "Last Name", checked: false},
+                {name: "Role", checked: false},
+                {name: "Manager", checked: false}
+            ],
+            name: "setColumns"
+        },
+        {
+            type: "input",
+            message: "Enter new first name",
+            when: (ans) => ans.setColumns.includes('First Name'),
+            name: "newFirstName"
+        },
+        {
+            type: "input",
+            message: "Enter new last name",
+            when: (ans) => ans.setColumns.includes('Last Name'),
+            name: "newLastName"
+        },
+        {
+            type: "input",
+            message: "Enter new role",
+            when: (ans) => ans.setColumns.includes('Role'),
+            name: "newRole"
+        },
+        {
+            type: "choices",
+            message: "Enter new Manager",
+            when: (ans) => ans.setColumns.includes('Manager'),
+            choices: employeeChoices,
+            name: "newManager"
+        }
+    ]
+}
 
 var getTableColumns = (table) => {
 
@@ -123,6 +181,8 @@ module.exports = {
     confirm,
     getAddEmployeeQuestions,
     getAddRoleQuestions,
+    getAddDepartmentQuestions,
+    getUpdateEmployeeQuestions ,
     getTableColumns
 }
 

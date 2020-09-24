@@ -66,6 +66,22 @@ var getAddDepartmentQuestions = () => {
     ];
 }
 
+var getUpdateDepartmentQuestions = (departmentChoices) => {
+    return [
+        {
+            type: "list",
+            message: "Choose which department to update",
+            choices: departmentChoices,
+            name: "department"
+        },
+        {
+            type: "input",
+            message: "Enter new name for department",
+            name: "name"
+        }
+    ];
+}
+
 var getUpdateRoleQuestions = (roleChoices, departmentChoices) => {
     return [
         {
@@ -225,6 +241,7 @@ module.exports = {
     getAddDepartmentQuestions,
     getUpdateEmployeeQuestions ,
     getUpdateRoleQuestions,
+    getUpdateDepartmentQuestions,
     getTableColumns
 }
 

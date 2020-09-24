@@ -55,6 +55,8 @@ async function main() {
                 case "Update role":
                     updateRole();
                     break;
+                case "Update department":
+                    updateDepartment();
                 default:
                     return "Error";
             }
@@ -80,10 +82,10 @@ function getTableData(table) {
     });
 };
 
-async function updateRole() {
+async function updateDepartment() {
 
     //Gets department table for inquirer questions
-    let roleData = await getTableData('role');
+
     let departmentData = await getTableData('department');
 
     let departmentChoices = Object.keys(departmentData).map((key) => {
@@ -91,21 +93,58 @@ async function updateRole() {
         return `${row.name}`;
     });
 
+
+    let questions = view.getUpdateDepartmentQuestions([...departmentChoices].sort());
+
+    let ans = await inquirer.prompt(questions);
+
+    //Gets the department id of the department the user selected;
+    let department = ans['department'];
+    let index = departmentChoices.indexOf(department);
+    let departmentId = departmentData[index].id;
+
+    let sql = `UPDATE department SET name = '${ans.name}' WHERE id = ${departmentId};`
+
+    connection.query(sql, function (err, results) {
+        if (err) console.log(err);
+
+        console.table(results);
+    });
+}
+
+async function updateRole() {
+
+    //Gets department table for inquirer questions
+    let roleData = await getTableData('role');
+    let departmentData = await getTableData('department');
+
+    //Creates an array of choices for user
+    let departmentChoices = Object.keys(departmentData).map((key) => {
+        let row = departmentData[key];
+        return `${row.name}`;
+    });
+
+    //...
     let roleChoices = Object.keys(roleData).map((key) => {
         let row = roleData[key];
         return `${row.title}`;
     });
 
+    //Gets the questions for updating a role
     let questions = view.getUpdateRoleQuestions([...roleChoices].sort(), [...departmentChoices].sort());
 
+    //Prompts user
     let ans = await inquirer.prompt(questions);
 
+    //Gets the role id of the role the user is updating
     let role = ans['role'];
     let index = roleChoices.indexOf(role);
     let roleId = roleData[index].id;
 
+    //Gets the keys for column data we are updating
     let ansKeys = Object.keys(ans).slice(2);
 
+    //Exits function if the user didnt choose any columns to update
     if (ansKeys.length == 0) {
         console.log("No column(s) was selected for update!")
         return -1;
@@ -118,12 +157,14 @@ async function updateRole() {
         ans['department'] = departmentData[index].id;
     }
 
-    let setStatements = ansKeys.map((key) => {return `${key} = '${ans[key]}'`}).join(", ");
+    //Creates set clause(s) for sql statement
+    let setStatements = ansKeys.map((key) => { return `${key} = '${ans[key]}'` }).join(", ");
 
+    //Creates final sql statement for query
     let sql = `UPDATE role SET ${setStatements} WHERE id = ${roleId};`;
 
-    connection.query(sql, function(err, results) {
-        if(err) console.log(err);
+    connection.query(sql, function (err, results) {
+        if (err) console.log(err);
 
         console.table(results);
     });
@@ -191,7 +232,6 @@ async function updateEmployee() {
         console.table(results);
     })
 }
-
 
 async function addDepartment() {
 

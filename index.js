@@ -1,6 +1,11 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 var view = require("./view.js");
+
+var ROLE = 'role';
+var EMPLOYEE = 'employee';
+var DEPARTMENT = 'department';
+
 //const cTable = require('console.table');
 
 var connection = mysql.createConnection({
@@ -23,28 +28,20 @@ connection.connect(function (err) {
     console.log("connected as id " + connection.threadId);
 
 
-    main();
+    main("Start");
 });
 
-async function main(){
+async function main(status) {
 
-    var done = false;
 
-    while(!done){
-        //Prompts user for query
-        let ans = await inquirer.prompt(view.actionQuestion);
+    ans = await inquirer.prompt(view.actionQuestion);
 
-        //Begins the query
-        let message = await startQuery(ans);
+    status = await startQuery(ans);
 
-        //Asks user if they are done
-        done = !(await inquirer.prompt(view.confirm));
-    }
-
-    connection.end();
+    //connection.end();
 }
 
-function startQuery(ans){
+async function startQuery(ans) {
     return new Promise((res, rej) => {
 
         switch (ans.action) {
@@ -74,6 +71,8 @@ function startQuery(ans){
                 break;
             case "Update department":
                 updateDepartment();
+            case "Exit CMS":
+                return res("Done");
             default:
                 return rej("Error");
         }
@@ -95,6 +94,15 @@ function getTableData(table) {
     });
 };
 
+function query(sql) {
+    return new Promise((res, rej) => {
+
+        connection.query(sql, (err, results) => {
+            return err ? rej(err) : res(results);
+        });
+    });
+}
+
 async function updateDepartment() {
 
     //Gets department table for inquirer questions
@@ -105,22 +113,21 @@ async function updateDepartment() {
         return `${row.name}`;
     });
 
-
+    //Forms inquirer questions with department choices and then prompts the user
     let questions = view.getUpdateDepartmentQuestions([...departmentChoices].sort());
     let ans = await inquirer.prompt(questions);
 
     //Gets the department id of the department the user selected;
     let department = ans['department'];
     let index = departmentChoices.indexOf(department);
-    let departmentId = departmentData[index].id;
 
+    //Forms string literals for sql statement
+    let departmentId = departmentData[index].id;
     let sql = `UPDATE department SET name = '${ans.name}' WHERE id = ${departmentId};`
 
-    connection.query(sql, function (err, results) {
-        if (err) console.log(err);
-
-        console.table(results);
-    });
+    //Logs results for user
+    let results = await query(sql);
+    console.table(results);
 }
 
 async function updateRole() {
@@ -168,17 +175,13 @@ async function updateRole() {
         ans['department'] = departmentData[index].id;
     }
 
-    //Creates set clause(s) for sql statement
-    let setStatements = ansKeys.map((key) => { return `${key} = '${ans[key]}'` }).join(", ");
-
     //Creates final sql statement for query
+    let setStatements = ansKeys.map((key) => { return `${key} = '${ans[key]}'` }).join(", ");
     let sql = `UPDATE role SET ${setStatements} WHERE id = ${connection.escape(roleId)};`;
 
-    connection.query(sql, function (err, results) {
-        if (err) console.log(err);
-
-        console.table(results);
-    });
+    //Logs results for user
+    let results = await query(sql);
+    console.table(results);
 }
 
 async function updateEmployee() {
@@ -237,11 +240,9 @@ async function updateEmployee() {
     let setStatements = ansKeys.map((key) => { return `${key} = '${ans[key]}'`; }).join(", ");
     let sql = `UPDATE employee SET ${setStatements} WHERE id = ${connection.escape(employeeId)};`;
 
-    connection.query(sql, function (err, results) {
-        if (err) console.log(err);
-
-        console.table(results);
-    });
+    //Logs results for user
+    let results = await query(sql);
+    console.table(results);
 }
 
 async function addDepartment() {
@@ -253,93 +254,71 @@ async function addDepartment() {
     //Prompts user for new department name information
     let ans = await inquirer.prompt(questions);
 
-    //Gets string of columns for for string literal
+    //Forms string literals for sql statement
     let columns = view.getTableColumns('department');
-
     let sql = `INSERT INTO department ${columns} VALUES ('${ans.name}')`;
 
-    connection.query(sql, function (err, results, fields) {
-        if (err) throw err;
-        console.log('\n');
-        console.log(results);
-        console.log('\n');
-    });
+    //Logs results for user
+    let results = await query(sql);
+    console.log("Added new Department!");
+    console.table(results);
 }
 
-function addRole() {
-    var sql = "SELECT * FROM department";
+async function addRole() {
 
+    var departmentData = await getTableData(DEPARTMENT);
 
-    connection.query(sql, async function (err, results, fields) {
-
-        if (err) throw err;
-
-        //console.table(results);
-
-        //Gets row data from department table for inqurier question object
-        let choices = Object.keys(results).map((key) => {
-            let row = results[key];
-            return row;
-        });
-
-        //Gets questions for new role
-        let questions = view.getAddRoleQuestions(choices.map((row) => row.name));
-
-        //Prompts user for new role information
-        let ans = await inquirer.prompt(questions);
-
-        //Sets variables for string literal
-        let columns = view.getTableColumns('role');
-        let row = choices.find((row) => { return row.name === ans.department });
-
-        let sql = `INSERT INTO role ${columns} VALUES ('${ans.title}', '${ans.salary}', ${connection.escape(row.id)})`;
-
-        connection.query(sql, function (err, results, fields) {
-            if (err) throw err;
-            console.log('\n');
-            console.log(results);
-            console.log('\n');
-        });
+    //Gets row data from department table for inqurier question object
+    let choices = Object.keys(departmentData).map((key) => {
+        let row = departmentData[key];
+        return row;
     });
+
+    //Gets questions for new role
+    let questions = view.getAddRoleQuestions(choices.map((row) => row.name));
+
+    //Prompts user for new role information
+    let ans = await inquirer.prompt(questions);
+
+    //Sets variables for string literal
+    let columns = view.getTableColumns('role');
+    let row = choices.find((row) => { return row.name === ans.department });
+
+    //Forms sql statement and then querys with it
+    let sql = `INSERT INTO role ${columns} VALUES ('${ans.title}', '${ans.salary}', ${connection.escape(row.id)})`;
+
+    //Logs results for user
+    let results = await query(sql);
+    console.log("Added new Department");
+    console.table(results);
 }
 
-function addEmployee() {
+async function addEmployee() {
 
-    var sql = "SELECT * FROM role";
+    //var sql = "SELECT * FROM role";
+    let roleData = await getTableData(ROLE);
 
-    connection.query(sql, async function (err, results, fields) {
-        if (err) throw err;
 
-        console.table(results);
-
-        //Gets row data for inqurier question object
-        let choices = Object.keys(results).map((key) => {
-            let row = results[key];
-            return { title: row.title, id: row.id };
-        });
-
-        //Sets the choices for possible roles for employee questions 
-        let questions = view.getAddEmployeeQuestions(choices.map((row) => row.title));
-
-        //Asks user for new employee information
-        let ans = await inquirer.prompt(questions);
-
-        //Sets up data for string literals
-        let columns = view.getTableColumns('employee');
-        let row = choices.find((row) => { return row.title === ans.roleName });
-        //let {firstName, lastName, ...ans} = ans;
-
-        let sql = `INSERT INTO employee ${columns} VALUES ('${ans.firstName}', '${ans.lastName}', ${connection.escape(row.id)})`;
-
-        console.log(sql);
-
-        connection.query(sql, function (err, results, fields) {
-            if (err) throw err;
-            console.log('\n');
-            console.log(results);
-            console.log('\n');
-        });
+    //Gets row data for inqurier question object
+    let choices = Object.keys(roleData).map((key) => {
+        let row = roleData[key];
+        return { title: row.title, id: row.id };
     });
-    //connection.query('')
+
+    //Sets the choices for possible roles for employee questions 
+    let questions = view.getAddEmployeeQuestions(choices.map((row) => row.title));
+
+    //Asks user for new employee information
+    let ans = await inquirer.prompt(questions);
+
+    //Forms string literals for sql statement
+    let columns = view.getTableColumns('employee');
+    let row = choices.find((row) => { return row.title === ans.roleName });
+    let sql = `INSERT INTO employee ${columns} VALUES ('${ans.firstName}', '${ans.lastName}', ${connection.escape(row.id)})`;
+
+    //Logs results for user
+    let results = await query(sql);
+    console.log("Added new Employee!");
+    console.table(results);
 }
 

@@ -4,7 +4,7 @@ var actionQuestion = [
         message: "What would you like to do?",
         choices: ["View all employees", "View all roles", "View all departments", 
                   "Add employee", "Add role", "Add department", 
-                  "Update employee", "Update role", "Update department", "Remove employee"],
+                  "Update employee", "Update role", "Update department", "Remove employee", "Exit CMS"],
 
         name: "action"
     }

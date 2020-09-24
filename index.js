@@ -62,42 +62,84 @@ async function main() {
     // await inquirer.prompt(view.confirm).then((ans) => done = !ans.confirm);
 }
 
-function viewTable(table) {
+async function viewTable(table) {
 
-    res = connection.query('SELECT * FROM ?? ', [table], function (err, results, fields) {
-        if (err) throw err;
-        console.log('\n');
-        //console.table(results);
-        console.log('\n');
+    res = await getTableData(table)
+    console.table(res);
+};
 
-        return results
+function getTableData(table) {
+    return new Promise((res, rej) => {
+
+        connection.query('SELECT * FROM ?? ', [table], function (err, results, fields) {
+            return err ? rej(err) : res(results);
+        });
     });
 };
 
-function updateEmployee() {
+async function updateEmployee() {
 
-    let sql = 'SELECT * from employee';
-    var data;
+    //Gets table data to for inquirer question lists
+    let employeeData = await getTableData('employee');
+    let roleData = await getTableData('role');
 
-    connection.query(sql, async function(err, results ,fields) {
-
-        if(err) throw err;
-
-        let choices = Object.keys(results).map((key) => {
-            let row = results[key];
-            return row;
-        });
-
-        console.log(choices);
-
-        //Creates a sorted array of employees for the user to choose for inquirer question
-        let questions = view.getUpdateEmployeeQuestions(choices.map((row) => `${row.last_name}, ${row.first_name}`).sort());
-
-        let ans = await inquirer.prompt(questions);
-
-        console.log({ans});
-        data = choices;
+    //Formats list entries
+    let employeeChoices = Object.keys(employeeData).map((key) => {
+        let row = employeeData[key];
+        return `${row.last_name}, ${row.first_name}`;
     });
+
+    //....
+    let roleChoices = Object.keys(roleData).map((key) => {
+        let row = roleData[key];
+        return `${row.title}`;
+    });
+
+    //Creates questions with sorted lists (spread so we maintain order for transforms)
+    let questions = view.getUpdateEmployeeQuestions([...employeeChoices].sort(), [...roleChoices].sort());
+
+    //Asks user for an employee record and the values to update on that record
+    let ans = await inquirer.prompt(questions);
+
+    //Transforms the employee name the user selected into the manager's id
+    let employee = ans['employee'];
+    let index = employeeChoices.indexOf(employee);
+    let employeeId = employeeData[index].id;
+
+
+    //Gets the keys for the column data user wants to update
+    let ansKeys = Object.keys(ans).slice(2);
+
+    console.log(ansKeys.length);
+
+    if(ansKeys.length == 0){
+        console.log("No column(s) was selected for update!")
+        return -1;
+    }
+    
+    //Transforms the managers name the user selected into the manager's id
+    if (ansKeys.includes('manager_id')) {
+        let manager = ans['manager_id'];
+        let index = employeeChoices.indexOf(manager);
+        ans['manager_id'] = employeeData[index].id;
+    }
+
+    //Transforms the role name the user selected into the role's id
+    if (ansKeys.includes('role_id')) {
+        let role = ans['role_id'];
+        let index = roleChoices.indexOf(role);
+        ans['role_id'] = roleData[index].id;
+    }
+
+    //Forms the set portion of the update statement
+    let setStatements = ansKeys.map((key) => {return `${key} \= '${ans[key]}'`;}).join(", ");
+    let sql = `UPDATE employee SET ${setStatements} WHERE id = ${connection.escape(employeeId)};`;
+
+    connection.query(sql, function(err, results) {
+        if(err) console.log(err);
+
+        console.table(results);
+    })
 }
 
 
@@ -125,6 +167,7 @@ async function addDepartment() {
 
 function addRole() {
     var sql = "SELECT * FROM department";
+
 
     connection.query(sql, async function (err, results, fields) {
 

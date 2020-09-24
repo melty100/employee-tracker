@@ -66,7 +66,7 @@ var getAddDepartmentQuestions = () => {
     ];
 }
 
-var getUpdateEmployeeQuestions = (employeeChoices) => {
+var getUpdateEmployeeQuestions = (employeeChoices, roleChoices) => {
     return [
         {
             type: "list",
@@ -89,26 +89,27 @@ var getUpdateEmployeeQuestions = (employeeChoices) => {
             type: "input",
             message: "Enter new first name",
             when: (ans) => ans.setColumns.includes('First Name'),
-            name: "newFirstName"
+            name: "first_name"
         },
         {
             type: "input",
             message: "Enter new last name",
             when: (ans) => ans.setColumns.includes('Last Name'),
-            name: "newLastName"
+            name: "last_name"
         },
         {
-            type: "input",
+            type: "list",
             message: "Enter new role",
             when: (ans) => ans.setColumns.includes('Role'),
-            name: "newRole"
+            choices: roleChoices,
+            name: "role_id"
         },
         {
-            type: "choices",
+            type: "list",
             message: "Enter new Manager",
             when: (ans) => ans.setColumns.includes('Manager'),
             choices: employeeChoices,
-            name: "newManager"
+            name: "manager_id"
         }
     ]
 }

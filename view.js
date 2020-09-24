@@ -10,7 +10,7 @@ var actionQuestion = [
     }
 ];
 
-// These functions return paramaterized questions for inquirer
+
 var getAddEmployeeQuestions = (roleChoices) => {
     return [
     {
@@ -189,41 +189,7 @@ var getTableColumns = (table) => {
     return '';
 }
 
-/*
-    //Qusetions for departments
-    {
-        type: "input",
-        message: "Enter new department name",
-        when: (ans) => ans.action == 'Add department',
-        name: "department"
-    },
-    //Quesitons adding employee
-    {
-        type: "input",
-        message: "Enter employee's first name.",
-        when: (ans) => ans.action == 'Add employee',
-        name: "firstName"
-    },
-    {
-        type: "input",
-        message: "Enter employee's last name.",
-        when: (ans) => ans.action == 'Add employee',
-        name: "lastName"
-    },
-    {
-        type: "input",
-        message: "Enter employee's role",
-        when: (ans) => ans.action == 'Add employee',
-        name: "employeeRole"
-    },
-    {
-        type: "input",
-        message: "Enter employee's manager id",
-        when: (ans) => ans.action == "Add employee",
-        name: "managerId"
-    }
-]
-*/
+
 var confirm = [
     {
         type: "list",

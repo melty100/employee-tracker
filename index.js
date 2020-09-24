@@ -26,50 +26,60 @@ connection.connect(function (err) {
     main();
 });
 
-async function main() {
+async function main(){
 
-    inquirer
-        .prompt(view.actionQuestion)
-        .then((ans) => {
+    var done = false;
 
-            switch (ans.action) {
-                case "View all employees":
-                    viewTable("employee");
-                    break;
-                case "View all roles":
-                    viewTable("role")
-                    break;
-                case "View all departments":
-                    viewTable("department");
-                    break;
-                case "Add employee":
-                    addEmployee();
-                    break;
-                case "Add role":
-                    addRole();
-                    break;
-                case "Add department":
-                    addDepartment();
-                    break;
-                case "Update employee":
-                    updateEmployee();
-                    break;
-                case "Update role":
-                    updateRole();
-                    break;
-                case "Update department":
-                    updateDepartment();
-                default:
-                    return "Error";
-            }
+    while(!done){
+        //Prompts user for query
+        let ans = await inquirer.prompt(view.actionQuestion);
 
-            //return prompt(view.actionQuestion);
-        })
-        .then(() => {
-            //connection.end();
-        });
+        //Begins the query
+        let message = await startQuery(ans);
+
+        //Asks user if they are done
+        done = !(await inquirer.prompt(view.confirm));
+    }
+
+    connection.end();
 }
 
+function startQuery(ans){
+    return new Promise((res, rej) => {
+
+        switch (ans.action) {
+            case "View all employees":
+                viewTable("employee");
+                break;
+            case "View all roles":
+                viewTable("role")
+                break;
+            case "View all departments":
+                viewTable("department");
+                break;
+            case "Add employee":
+                addEmployee();
+                break;
+            case "Add role":
+                addRole();
+                break;
+            case "Add department":
+                addDepartment();
+                break;
+            case "Update employee":
+                updateEmployee();
+                break;
+            case "Update role":
+                updateRole();
+                break;
+            case "Update department":
+                updateDepartment();
+            default:
+                return rej("Error");
+        }
+        return res("Success!");
+    });
+}
 async function viewTable(table) {
 
     res = await getTableData(table)
@@ -88,7 +98,6 @@ function getTableData(table) {
 async function updateDepartment() {
 
     //Gets department table for inquirer questions
-
     let departmentData = await getTableData('department');
 
     let departmentChoices = Object.keys(departmentData).map((key) => {
@@ -98,7 +107,6 @@ async function updateDepartment() {
 
 
     let questions = view.getUpdateDepartmentQuestions([...departmentChoices].sort());
-
     let ans = await inquirer.prompt(questions);
 
     //Gets the department id of the department the user selected;
@@ -175,7 +183,7 @@ async function updateRole() {
 
 async function updateEmployee() {
 
-    //Gets table data to for inquirer question lists
+    //Gets table data for inquirer question lists
     let employeeData = await getTableData('employee');
     let roleData = await getTableData('role');
 
@@ -197,7 +205,7 @@ async function updateEmployee() {
     //Asks user for an employee record and the values to update on that record
     let ans = await inquirer.prompt(questions);
 
-    //Transforms the employee name the user selected into the manager's id
+    //Transforms the manager name the user selected into the manager's id
     let employee = ans['employee'];
     let index = employeeChoices.indexOf(employee);
     let employeeId = employeeData[index].id;
@@ -211,7 +219,7 @@ async function updateEmployee() {
         return -1;
     }
 
-    //Transforms the managers name the user selected into the manager's id
+    //Transforms the managers name in the ans obj into the manager's id
     if (ansKeys.includes('manager_id')) {
         let manager = ans['manager_id'];
         let index = employeeChoices.indexOf(manager);
@@ -226,14 +234,14 @@ async function updateEmployee() {
     }
 
     //Forms the set portion of the update statement
-    let setStatements = ansKeys.map((key) => { return `${key} \= '${ans[key]}'`; }).join(", ");
+    let setStatements = ansKeys.map((key) => { return `${key} = '${ans[key]}'`; }).join(", ");
     let sql = `UPDATE employee SET ${setStatements} WHERE id = ${connection.escape(employeeId)};`;
 
     connection.query(sql, function (err, results) {
         if (err) console.log(err);
 
         console.table(results);
-    })
+    });
 }
 
 async function addDepartment() {

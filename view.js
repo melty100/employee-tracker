@@ -2,9 +2,9 @@ var actionQuestion = [
     {
         type: "list",
         message: "What would you like to do?",
-        choices: ["View all employees", "Add employee", "Update employee", "Remove employee",
-            "View all departments", "Add department", "Update department",
-            "View all roles", "Add role", "Update role"],
+        choices: ["View all employees", "View all roles", "View all departments", 
+                  "Add employee", "Add role", "Add department", 
+                  "Update employee", "Update role", "Update department", "Remove employee"],
 
         name: "action"
     }

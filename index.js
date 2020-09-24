@@ -1,6 +1,7 @@
 var mysql = require("mysql");
 var inquirer = require("inquirer");
 var view = require("./view.js");
+//const cTable = require('console.table');
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -21,15 +22,16 @@ connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
 
+
     main();
 });
 
 async function main() {
 
-
-    await inquirer
+    inquirer
         .prompt(view.actionQuestion)
         .then((ans) => {
+
             switch (ans.action) {
                 case "View all employees":
                     viewTable("employee");
@@ -60,11 +62,12 @@ async function main() {
                 default:
                     return "Error";
             }
+
+            //return prompt(view.actionQuestion);
+        })
+        .then(() => {
+            //connection.end();
         });
-
-    //let res = await sqlOperation(ans);  
-
-    // await inquirer.prompt(view.confirm).then((ans) => done = !ans.confirm);
 }
 
 async function viewTable(table) {
@@ -76,7 +79,7 @@ async function viewTable(table) {
 function getTableData(table) {
     return new Promise((res, rej) => {
 
-        connection.query('SELECT * FROM ?? ', [table], function (err, results, fields) {
+        connection.query('SELECT * FROM ?? ', [table], function (err, results) {
             return err ? rej(err) : res(results);
         });
     });
@@ -161,7 +164,7 @@ async function updateRole() {
     let setStatements = ansKeys.map((key) => { return `${key} = '${ans[key]}'` }).join(", ");
 
     //Creates final sql statement for query
-    let sql = `UPDATE role SET ${setStatements} WHERE id = ${roleId};`;
+    let sql = `UPDATE role SET ${setStatements} WHERE id = ${connection.escape(roleId)};`;
 
     connection.query(sql, function (err, results) {
         if (err) console.log(err);

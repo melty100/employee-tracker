@@ -66,6 +66,46 @@ var getAddDepartmentQuestions = () => {
     ];
 }
 
+var getUpdateRoleQuestions = (roleChoices, departmentChoices) => {
+    return [
+        {
+            type: "list",
+            message: "Choose whice role record to update",
+            choices: roleChoices,
+            name: "role"
+        },
+        {
+            type: "checkbox",
+            message: "Select which column data you would like to update",
+            choices: [
+                {name: "Title", checked: false},
+                {name: "Salary", checked: false},
+                {name: "Department", checked: false}
+            ],
+            name: "setColumns"
+        },
+        {
+            type: "input",
+            message: "Enter new title",
+            when: (ans) => ans.setColumns.includes('Title'),
+            name: "title"
+        },
+        {
+            type: "input",
+            message: "Enter new salary",
+            when: (ans) => ans.setColumns.includes('Salary'),
+            name: "salary"
+        },
+        {
+            type: "input",
+            message: "Enter new department",
+            when: (ans) => ans.setColumns.includes('Department'),
+            choices: departmentChoices,
+            name: "department"
+        }
+    ];
+}
+
 var getUpdateEmployeeQuestions = (employeeChoices, roleChoices) => {
     return [
         {
@@ -184,6 +224,7 @@ module.exports = {
     getAddRoleQuestions,
     getAddDepartmentQuestions,
     getUpdateEmployeeQuestions ,
+    getUpdateRoleQuestions,
     getTableColumns
 }
 

@@ -52,6 +52,9 @@ async function main() {
                 case "Update employee":
                     updateEmployee();
                     break;
+                case "Update role":
+                    updateRole();
+                    break;
                 default:
                     return "Error";
             }
@@ -76,6 +79,55 @@ function getTableData(table) {
         });
     });
 };
+
+async function updateRole() {
+
+    //Gets department table for inquirer questions
+    let roleData = await getTableData('role');
+    let departmentData = await getTableData('department');
+
+    let departmentChoices = Object.keys(departmentData).map((key) => {
+        let row = departmentData[key];
+        return `${row.name}`;
+    });
+
+    let roleChoices = Object.keys(roleData).map((key) => {
+        let row = roleData[key];
+        return `${row.title}`;
+    });
+
+    let questions = view.getUpdateRoleQuestions([...roleChoices].sort(), [...departmentChoices].sort());
+
+    let ans = await inquirer.prompt(questions);
+
+    let role = ans['role'];
+    let index = roleChoices.indexOf(role);
+    let roleId = roleData[index].id;
+
+    let ansKeys = Object.keys(ans).slice(2);
+
+    if (ansKeys.length == 0) {
+        console.log("No column(s) was selected for update!")
+        return -1;
+    }
+
+    //Transforms the department name the user selected into the department's id
+    if (ansKeys.includes('department')) {
+        let department = ans['department'];
+        let index = departmentChoices.indexOf(department);
+        ans['department'] = departmentData[index].id;
+    }
+
+    let setStatements = ansKeys.map((key) => {return `${key} = '${ans[key]}'`}).join(", ");
+
+    let sql = `UPDATE role SET ${setStatements} WHERE id = ${roleId};`;
+
+    connection.query(sql, function(err, results) {
+        if(err) console.log(err);
+
+        console.table(results);
+    });
+}
 
 async function updateEmployee() {
 
@@ -110,13 +162,11 @@ async function updateEmployee() {
     //Gets the keys for the column data user wants to update
     let ansKeys = Object.keys(ans).slice(2);
 
-    console.log(ansKeys.length);
-
-    if(ansKeys.length == 0){
+    if (ansKeys.length == 0) {
         console.log("No column(s) was selected for update!")
         return -1;
     }
-    
+
     //Transforms the managers name the user selected into the manager's id
     if (ansKeys.includes('manager_id')) {
         let manager = ans['manager_id'];
@@ -132,11 +182,11 @@ async function updateEmployee() {
     }
 
     //Forms the set portion of the update statement
-    let setStatements = ansKeys.map((key) => {return `${key} \= '${ans[key]}'`;}).join(", ");
+    let setStatements = ansKeys.map((key) => { return `${key} \= '${ans[key]}'`; }).join(", ");
     let sql = `UPDATE employee SET ${setStatements} WHERE id = ${connection.escape(employeeId)};`;
 
-    connection.query(sql, function(err, results) {
-        if(err) console.log(err);
+    connection.query(sql, function (err, results) {
+        if (err) console.log(err);
 
         console.table(results);
     })

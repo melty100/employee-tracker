@@ -28,57 +28,73 @@ connection.connect(function (err) {
     console.log("connected as id " + connection.threadId);
 
 
-    main("Start");
+    main();
 });
 
-async function main(status) {
+function main() {
 
 
-    ans = await inquirer.prompt(view.actionQuestion);
+    const promptUser = async () => {
 
-    status = await startQuery(ans);
+        let ans = await inquirer.prompt(view.actionQuestion);
+        let status = await startQuery(ans);
 
-    //connection.end();
+        if(status === "Continue"){
+           return promptUser();
+        }
+
+        if(status ==="Done"){
+            connection.end();
+            return 0;
+        }
+
+        if(status === "Error"){
+            connection.end();
+            return -1;
+        }
+    }
+    return promptUser();
 }
 
 async function startQuery(ans) {
-    return new Promise((res, rej) => {
+    return new Promise(async (res, rej) => {
 
         switch (ans.action) {
             case "View all employees":
-                viewTable("employee");
+                await viewTable("employee");
                 break;
             case "View all roles":
-                viewTable("role")
+                await viewTable("role")
                 break;
             case "View all departments":
-                viewTable("department");
+                await viewTable("department");
                 break;
             case "Add employee":
-                addEmployee();
+                await addEmployee();
                 break;
             case "Add role":
-                addRole();
+                await addRole();
                 break;
             case "Add department":
-                addDepartment();
+                await addDepartment();
                 break;
             case "Update employee":
-                updateEmployee();
+                await updateEmployee();
                 break;
             case "Update role":
-                updateRole();
+                await updateRole();
                 break;
             case "Update department":
-                updateDepartment();
+                await updateDepartment();
             case "Exit CMS":
                 return res("Done");
             default:
                 return rej("Error");
         }
-        return res("Success!");
+        return res("Continue");
     });
 }
+
 async function viewTable(table) {
 
     res = await getTableData(table)
@@ -291,6 +307,8 @@ async function addRole() {
     let results = await query(sql);
     console.log("Added new Department");
     console.table(results);
+
+    return Promise.resolve("testing..");
 }
 
 async function addEmployee() {

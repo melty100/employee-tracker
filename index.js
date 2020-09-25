@@ -23,12 +23,17 @@ var connection = mysql.createConnection({
     multipleStatements: true
 });
 
-connection.connect(function (err) {
+connection.connect(async (err) => {
     if (err) throw err;
     console.log("connected as id " + connection.threadId);
 
 
-    main();
+    let status = await main();
+
+    message = status == 0 ? "Exiting CMS ..." : 
+                            "Error: StartQuery does not support selected operation.";
+
+    console.log(message);
 });
 
 function main() {
@@ -86,6 +91,10 @@ async function startQuery(ans) {
                 break;
             case "Update department":
                 await updateDepartment();
+                break;
+            case "Get department budget":
+                await getBudget();
+                break;
             case "Exit CMS":
                 return res("Done");
             default:
@@ -117,6 +126,37 @@ function query(sql) {
             return err ? rej(err) : res(results);
         });
     });
+}
+
+async function getBudget() {
+
+    //Gets department names for user selection
+    let departmentData = await getTableData(DEPARTMENT);
+
+    let departmentChoices = Object.keys(departmentData).map((key) =>{
+        let row = departmentData[key];
+        return `${row.name}, ${row.id}`;
+    });
+
+    console.log(departmentChoices);
+
+    let questions = view.getBudgetQuestions([...departmentChoices]);
+
+    let ans = await inquirer.prompt(questions);
+
+    let depId = ans['department'].split(",")[1];
+
+    console.log({ans});
+    console.log(depId);
+
+    let sql =  `SELECT SUM(s.salary) as Budget FROM (SELECT id as role_id, salary FROM role WHERE department_id = ${depId}) s JOIN employee e ON e.role_id = s.role_id;`;
+
+    console.log(sql);
+
+    let results = await query(sql);
+
+    console.table(results);
+
 }
 
 async function updateDepartment() {

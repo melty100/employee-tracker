@@ -4,12 +4,12 @@ var actionQuestion = [
         message: "What would you like to do?",
         choices: ["View all employees", "View all roles", "View all departments", 
                   "Add employee", "Add role", "Add department", 
-                  "Update employee", "Update role", "Update department", "Remove employee", "Exit CMS"],
+                  "Update employee", "Update role", "Update department", "Remove employee",
+                  "Get department budget", "Exit CMS"],
 
         name: "action"
     }
 ];
-
 
 var getAddEmployeeQuestions = (roleChoices) => {
     return [
@@ -189,6 +189,16 @@ var getTableColumns = (table) => {
     return '';
 }
 
+var getBudgetQuestions = (departmentChoices) => {
+    return [
+        {
+            type: "list",
+            message: "Choose a department",
+            choices: departmentChoices,
+            name: "department"
+        }
+    ];
+}
 
 var confirm = [
     {
@@ -208,6 +218,7 @@ module.exports = {
     getUpdateEmployeeQuestions ,
     getUpdateRoleQuestions,
     getUpdateDepartmentQuestions,
+    getBudgetQuestions,
     getTableColumns
 }
 

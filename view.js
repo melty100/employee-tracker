@@ -113,11 +113,11 @@ var getUpdateRoleQuestions = (roleChoices, departmentChoices) => {
             name: "salary"
         },
         {
-            type: "input",
+            type: "list",
             message: "Enter new department",
             when: (ans) => ans.setColumns.includes('Department'),
             choices: departmentChoices,
-            name: "department"
+            name: "department_id"
         }
     ];
 }

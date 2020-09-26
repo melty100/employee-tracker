@@ -132,29 +132,22 @@ async function getBudget() {
 
     //Gets department names for user selection
     let departmentData = await getTableData(DEPARTMENT);
-
     let departmentChoices = Object.keys(departmentData).map((key) =>{
         let row = departmentData[key];
         return `${row.name}, ${row.id}`;
     });
 
-    console.log(departmentChoices);
-
+    //Gets questions and then asks user
     let questions = view.getBudgetQuestions([...departmentChoices]);
-
     let ans = await inquirer.prompt(questions);
 
-    let depId = ans['department'].split(",")[1];
+    //Forming string for sql query
+    let department = ans['department'].split(",");
+    let sql =  `SELECT SUM(s.salary) as Budget FROM (SELECT id as role_id, salary FROM role WHERE department_id = ${department[1]}) s JOIN employee e ON e.role_id = s.role_id;`;
 
-    console.log({ans});
-    console.log(depId);
-
-    let sql =  `SELECT SUM(s.salary) as Budget FROM (SELECT id as role_id, salary FROM role WHERE department_id = ${depId}) s JOIN employee e ON e.role_id = s.role_id;`;
-
-    console.log(sql);
-
+    //Logging results for user
     let results = await query(sql);
-
+    console.log(`Budget for ${department[0]} department`);
     console.table(results);
 
 }
@@ -204,6 +197,8 @@ async function updateRole() {
         return `${row.title}`;
     });
 
+    console.log(departmentChoices);
+
     //Gets the questions for updating a role
     let questions = view.getUpdateRoleQuestions([...roleChoices].sort(), [...departmentChoices].sort());
 
@@ -225,15 +220,17 @@ async function updateRole() {
     }
 
     //Transforms the department name the user selected into the department's id
-    if (ansKeys.includes('department')) {
-        let department = ans['department'];
+    if (ansKeys.includes('department_id')) {
+        let department = ans['department_id'];
         let index = departmentChoices.indexOf(department);
-        ans['department'] = departmentData[index].id;
+        ans['department_id'] = departmentData[index].id;
     }
 
     //Creates final sql statement for query
     let setStatements = ansKeys.map((key) => { return `${key} = '${ans[key]}'` }).join(", ");
     let sql = `UPDATE role SET ${setStatements} WHERE id = ${connection.escape(roleId)};`;
+
+    console.log(sql);
 
     //Logs results for user
     let results = await query(sql);
